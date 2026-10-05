@@ -1,0 +1,13 @@
+const EVENTS=[
+{id:1,name:"Fórmula 1 2026",city:"São Paulo, SP",date:"2026-11-06",price:3575,img:"https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=1000&q=85"},
+{id:2,name:"Iron Maiden — Run For Your Lives",city:"Curitiba, PR",date:"2026-12-01",price:420,img:"https://images.unsplash.com/photo-1501612780327-45045538702b?auto=format&fit=crop&w=1000&q=85"},
+{id:3,name:"BTS — World Tour",city:"São Paulo, SP",date:"2026-10-20",price:850,img:"https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1000&q=85"},
+{id:4,name:"Rock the Mountain 2026",city:"Teresópolis, RJ",date:"2026-11-14",price:390,img:"https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1000&q=85"},
+{id:5,name:"Luan Santana — Registro Histórico",city:"Belo Horizonte, MG",date:"2026-12-12",price:180,img:"https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1000&q=85"}];
+
+function money(n){return n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})}
+function renderEvents(list=EVENTS){const el=document.getElementById("eventGrid");if(!el)return;el.innerHTML=list.map(e=>`<article class="card" onclick="location.href='evento.html?id=${e.id}'"><img src="${e.img}"><div><small>${new Date(e.date+"T12:00:00").toLocaleDateString("pt-BR")}</small><h3>${e.name}</h3><p>${e.city}</p><div class="price">A partir de ${money(e.price)}</div></div></article>`).join("")}
+renderEvents();
+const search=document.getElementById("search");if(search)search.addEventListener("input",()=>{const q=search.value.toLowerCase();renderEvents(EVENTS.filter(e=>(e.name+" "+e.city).toLowerCase().includes(q)))});
+const page=document.getElementById("eventPage");if(page){const id=Number(new URLSearchParams(location.search).get("id"));const e=EVENTS.find(x=>x.id===id)||EVENTS[0];page.innerHTML=`<img style="width:100%;max-height:430px;object-fit:cover;border-radius:18px" src="${e.img}"><h1>${e.name}</h1><p>${e.city} • ${new Date(e.date+"T12:00:00").toLocaleDateString("pt-BR")}</p><hr><h2>Ingressos disponíveis</h2><div class="card"><div><h3>Oferta de marketplace</h3><p>Setor a confirmar pelo vendedor</p><div class="price">${money(e.price)}</div><br><button class="btn" onclick="alert('Checkout será conectado ao backend na próxima etapa.')">Comprar ingresso</button></div></div>`}
+const sell=document.getElementById("sellEvent");if(sell){sell.innerHTML=EVENTS.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");document.getElementById("sellForm").addEventListener("submit",ev=>{ev.preventDefault();alert("Anúncio recebido. Na próxima etapa vamos salvar no banco e disponibilizar em tempo real.")})}
