@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TicketHub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="notice dark">Somos um marketplace secundário de ingressos. Os preços podem variar dos valores oficiais.</div>
+  <div class="notice yellow">Plataforma em desenvolvimento. Em breve, novidades!</div>
+
+  <header class="header">
+    <a class="brand" href="#">ticket<span>hub</span><b>.</b></a>
+    <nav>
+      <button class="btn login">♙ <span>Entrar</span></button>
+      <button class="btn announce">⚑ <span>Anunciar</span></button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <img src="https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1800&q=85" alt="Evento musical">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <span class="badge">DESTAQUE DA SEMANA</span>
+        <h1>Viva o palco.<br>Guarde a história.</h1>
+        <p>Encontre seu lugar nos eventos mais desejados do Brasil.</p>
+        <button class="hero-btn">Compre seu ingresso! <span>→</span></button>
+      </div>
+    </section>
+
+    <section class="search-wrap">
+      <div class="search">⌕ <input placeholder="Pesquisar eventos" aria-label="Pesquisar eventos"></div>
+    </section>
+
+    <section class="benefits">
+      <article class="benefit"><div class="icon">♢</div><div><h3>Compra protegida</h3><p>Ingressos validados e suporte</p></div></article>
+      <article class="benefit"><div class="icon">⌕</div><div><h3>Comece sua busca</h3><p>Defina data, cidade e categoria</p></div></article>
+    </section>
+
+    <section class="events">
+      <div class="section-title"><h2>Eventos em destaque</h2><p>Os mais procurados desta semana</p></div>
+      <div class="event-grid">
+        <article class="event-card">
+          <img src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1000&q=85" alt="Show">
+          <div class="event-info">
+            <div class="date">▣ 14 de novembro</div>
+            <h3>Noite Sertaneja ao Vivo</h3>
+            <p>São Paulo, SP</p>
+            <strong>A partir de R$ 89</strong>
+          </div>
+        </article>
+        <article class="event-card">
+          <img src="https://images.unsplash.com/photo-1501612780327-45045538702b?auto=format&fit=crop&w=1000&q=85" alt="Festival">
+          <div class="event-info">
+            <div class="date">▣ 25 de outubro</div>
+            <h3>Metal Fest Brasil</h3>
+            <p>São Paulo, SP</p>
+            <strong>A partir de R$ 120</strong>
+          </div>
+        </article>
+        <article class="event-card">
+          <img src="https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1000&q=85" alt="Festival">
+          <div class="event-info">
+            <div class="date">▣ 06 de dezembro</div>
+            <h3>Festival de Verão</h3>
+            <p>Rio de Janeiro, RJ</p>
+            <strong>A partir de R$ 150</strong>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer>© 2026 TicketHub. Ingressos ofertados por terceiros.</footer>
+
+  <nav class="mobile-nav">
+    <a class="active">⌂<span>Descobrir</span></a>
+    <a>⌕<span>Pesquisar</span></a>
+    <a>▣<span>Ingressos</span></a>
+    <a>◌<span>Conversas</span></a>
+    <a>♙<span>Entrar</span></a>
+  </nav>
+
+  <script src="script.js"></script>
+</body>
+</html>
