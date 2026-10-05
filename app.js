@@ -59,13 +59,12 @@ async function loadEvents() {
 
   try {
 
-    const { data, error } = await db
-      .from("events")
-      .select("*")
-      .eq("published", true)
-      .order("event_date", {
-        ascending: true
-      });
+   const { data, error } = await db
+  .from("events")
+  .select("*")
+  .order("event_date", {
+    ascending: true
+  }); 
 
     if (error) {
 
