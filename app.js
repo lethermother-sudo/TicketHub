@@ -612,14 +612,23 @@ async function initSell() {
          CRIAR ANÚNCIO
       ========================= */
 
-      const payload = {
-        event_id: selectedEvent.id,
-        seller_id: user.id,
-        sector: sector,
-        quantity: quantity,
-        price_cents: priceCents,
-        status: "available"
-      };
+      const ticketDate =
+  String(
+    formData.get("ticket_date") || ""
+  );
+if (!ticketDate) {
+  alert("Informe a data do ingresso.");
+  return;
+}
+const payload = {
+  event_id: selectedEvent.id,
+  seller_id: user.id,
+  sector: sector,
+  ticket_date: ticketDate || null,
+  quantity: quantity,
+  price_cents: priceCents,
+  status: "available"
+};
 
 
       const {
