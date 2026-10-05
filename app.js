@@ -56,25 +56,17 @@ let EVENTS = [];
 ========================= */
 
 async function loadEvents() {
-
   try {
-
-   const { data, error } = await db
-  .from("events")
-  .select("*")
-  .order("event_date", {
-    ascending: true
-  }); 
+    const { data, error } = await db
+      .from("events")
+      .select("*")
+      .order("event_date", {
+        ascending: true
+      });
 
     if (error) {
-
-      console.error(
-        "Erro ao carregar eventos:",
-        error
-      );
-
+      console.error("Erro ao carregar eventos:", error);
       EVENTS = fallbackEvents;
-
       return EVENTS;
     }
 
@@ -87,14 +79,8 @@ async function loadEvents() {
     return EVENTS;
 
   } catch (error) {
-
-    console.error(
-      "Erro de conexão com Supabase:",
-      error
-    );
-
+    console.error("Erro de conexão com Supabase:", error);
     EVENTS = fallbackEvents;
-
     return EVENTS;
   }
 }
@@ -105,7 +91,6 @@ async function loadEvents() {
 ========================= */
 
 function eventCard(event) {
-
   return `
     <article
       class="card"
@@ -151,14 +136,12 @@ function eventCard(event) {
 ========================= */
 
 function renderEvents(list = EVENTS) {
-
   const element =
     document.getElementById("eventGrid");
 
   if (!element) return;
 
   if (!list.length) {
-
     element.innerHTML = `
       <div class="card">
         <div>
@@ -183,7 +166,6 @@ function renderEvents(list = EVENTS) {
 ========================= */
 
 async function initHomeOrEvents() {
-
   const grid =
     document.getElementById("eventGrid");
 
@@ -197,11 +179,9 @@ async function initHomeOrEvents() {
     document.getElementById("search");
 
   if (search) {
-
     search.addEventListener(
       "input",
       () => {
-
         const query =
           search.value
             .trim()
@@ -209,7 +189,6 @@ async function initHomeOrEvents() {
 
         const filtered =
           EVENTS.filter(event => {
-
             const text = `
               ${event.name || ""}
               ${event.city || ""}
@@ -232,7 +211,6 @@ async function initHomeOrEvents() {
 ========================= */
 
 async function initEventPage() {
-
   const page =
     document.getElementById("eventPage");
 
@@ -252,7 +230,6 @@ async function initEventPage() {
     );
 
   if (!event) {
-
     page.innerHTML = `
       <div class="form-page">
 
@@ -277,7 +254,6 @@ async function initEventPage() {
   let listings = [];
 
   try {
-
     const result =
       await db
         .from("listings")
@@ -290,10 +266,14 @@ async function initEventPage() {
 
     if (!result.error) {
       listings = result.data || [];
+    } else {
+      console.error(
+        "Erro ao carregar anúncios:",
+        result.error
+      );
     }
 
   } catch (error) {
-
     console.error(
       "Erro ao carregar ingressos:",
       error
@@ -348,7 +328,6 @@ async function initEventPage() {
 
       ${
         listings.length
-
           ? listings
               .map(
                 listing => `
@@ -365,7 +344,7 @@ async function initEventPage() {
                     </h3>
 
                     <p>
-                      ${listing.quantity}
+                      ${Number(listing.quantity || 0)}
                       ingresso(s) disponível(is)
                     </p>
 
@@ -411,7 +390,7 @@ async function initEventPage() {
 
                 <a
                   class="btn"
-                  href="anunciar.html"
+                  href="anunciar.html?event=${encodeURIComponent(event.id)}"
                 >
                   Anunciar ingresso
                 </a>
@@ -433,7 +412,6 @@ async function initEventPage() {
 ========================= */
 
 async function initSell() {
-
   const form =
     document.getElementById("sellForm");
 
@@ -458,6 +436,24 @@ async function initSell() {
           `
         )
         .join("");
+
+
+    /* Se veio de um evento específico */
+    const params =
+      new URLSearchParams(location.search);
+
+    const eventId =
+      params.get("event");
+
+    if (
+      eventId &&
+      EVENTS.some(
+        event =>
+          String(event.id) === String(eventId)
+      )
+    ) {
+      select.value = eventId;
+    }
   }
 
 
@@ -466,6 +462,11 @@ async function initSell() {
     async event => {
 
       event.preventDefault();
+
+
+      /* =========================
+         VERIFICAR LOGIN
+      ========================= */
 
       const {
         data: { user }
@@ -478,55 +479,168 @@ async function initSell() {
           "Entre na sua conta antes de anunciar um ingresso."
         );
 
-        location.href = "login.html";
+        location.href =
+          "login.html";
 
         return;
       }
 
 
+      /* =========================
+         LER FORMULÁRIO
+      ========================= */
+
       const formData =
         new FormData(form);
 
-      const price =
-        Math.round(
-          Number(formData.get("price")) * 100
+
+      const eventId =
+        String(
+          formData.get("event_id") || ""
         );
 
 
+      const sector =
+        String(
+          formData.get("sector") || ""
+        ).trim();
+
+
+      const quantity =
+        Number(
+          formData.get("quantity")
+        );
+
+
+      const priceInput =
+        String(
+          formData.get("price") || ""
+        ).replace(",", ".");
+
+
+      const price =
+        Number(priceInput);
+
+
+      /* =========================
+         VALIDAÇÕES
+      ========================= */
+
+      if (!eventId) {
+
+        alert(
+          "Selecione um evento."
+        );
+
+        return;
+      }
+
+
+      if (!sector) {
+
+        alert(
+          "Informe o setor do ingresso."
+        );
+
+        return;
+      }
+
+
+      if (
+        !Number.isInteger(quantity) ||
+        quantity < 1
+      ) {
+
+        alert(
+          "Informe uma quantidade válida de ingressos."
+        );
+
+        return;
+      }
+
+
+      if (
+        !Number.isFinite(price) ||
+        price <= 0
+      ) {
+
+        alert(
+          "Informe um preço válido."
+        );
+
+        return;
+      }
+
+
+      const priceCents =
+        Math.round(price * 100);
+
+
+      if (priceCents < 100) {
+
+        alert(
+          "O preço mínimo é R$ 1,00."
+        );
+
+        return;
+      }
+
+
+      /* =========================
+         EVENTO ESCOLHIDO
+      ========================= */
+
+      const selectedEvent =
+        EVENTS.find(
+          item =>
+            String(item.id) ===
+            String(eventId)
+        );
+
+
+      if (!selectedEvent) {
+
+        alert(
+          "Evento não encontrado."
+        );
+
+        return;
+      }
+
+
+      /* =========================
+         CRIAR ANÚNCIO
+      ========================= */
+
       const payload = {
-
-        event_id:
-          formData.get("event_id"),
-
-        seller_id:
-          user.id,
-
-        sector:
-          formData.get("sector"),
-
-        quantity:
-          Number(
-            formData.get("quantity")
-          ),
-
-        price_cents:
-          price,
-
-        status:
-          "available"
+        event_id: selectedEvent.id,
+        seller_id: user.id,
+        sector: sector,
+        quantity: quantity,
+        price_cents: priceCents,
+        status: "available"
       };
 
 
-      const { error } =
-        await db
-          .from("listings")
-          .insert(payload);
+      const {
+        data,
+        error
+      } = await db
+        .from("listings")
+        .insert(payload)
+        .select()
+        .single();
 
 
       if (error) {
 
+        console.error(
+          "Erro ao publicar anúncio:",
+          error
+        );
+
         alert(
-          "Não foi possível publicar: " +
+          "Não foi possível publicar o ingresso:\n\n" +
           error.message
         );
 
@@ -534,11 +648,30 @@ async function initSell() {
       }
 
 
+      if (!data) {
+
+        alert(
+          "O anúncio não retornou os dados esperados."
+        );
+
+        return;
+      }
+
+
+      /* =========================
+         SUCESSO
+      ========================= */
+
       alert(
-        "Ingresso publicado com sucesso!"
+        "Ingresso publicado com sucesso! 🎟️"
       );
 
-      form.reset();
+
+      location.href =
+        "evento.html?id=" +
+        encodeURIComponent(
+          selectedEvent.id
+        );
     }
   );
 }
@@ -549,7 +682,6 @@ async function initSell() {
 ========================= */
 
 async function initLogin() {
-
   const form =
     document.getElementById("loginForm");
 
