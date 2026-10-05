@@ -5,6 +5,11 @@ const db = createClient(
   window.SUPABASE_ANON_KEY
 );
 
+
+/* =========================
+   UTILITÁRIOS
+========================= */
+
 function money(cents) {
   return (Number(cents || 0) / 100).toLocaleString("pt-BR", {
     style: "currency",
@@ -12,11 +17,13 @@ function money(cents) {
   });
 }
 
+
 function formatDate(value) {
   if (!value) return "Data a confirmar";
 
   return new Date(value).toLocaleDateString("pt-BR");
 }
+
 
 function escapeHtml(value = "") {
   return String(value).replace(
@@ -48,6 +55,7 @@ const fallbackEvents = [
   }
 ];
 
+
 let EVENTS = [];
 
 
@@ -56,31 +64,50 @@ let EVENTS = [];
 ========================= */
 
 async function loadEvents() {
+
   try {
-    const { data, error } = await db
-      .from("events")
-      .select("*")
-      .order("event_date", {
-        ascending: true
-      });
+
+    const { data, error } =
+      await db
+        .from("events")
+        .select("*")
+        .order("event_date", {
+          ascending: true
+        });
+
 
     if (error) {
-      console.error("Erro ao carregar eventos:", error);
+
+      console.error(
+        "Erro ao carregar eventos:",
+        error
+      );
+
       EVENTS = fallbackEvents;
+
       return EVENTS;
     }
 
+
     EVENTS = data || [];
+
 
     if (!EVENTS.length) {
       EVENTS = fallbackEvents;
     }
 
+
     return EVENTS;
 
   } catch (error) {
-    console.error("Erro de conexão com Supabase:", error);
+
+    console.error(
+      "Erro de conexão com Supabase:",
+      error
+    );
+
     EVENTS = fallbackEvents;
+
     return EVENTS;
   }
 }
@@ -91,6 +118,7 @@ async function loadEvents() {
 ========================= */
 
 function eventCard(event) {
+
   return `
     <article
       class="card"
@@ -136,25 +164,37 @@ function eventCard(event) {
 ========================= */
 
 function renderEvents(list = EVENTS) {
+
   const element =
     document.getElementById("eventGrid");
 
+
   if (!element) return;
 
+
   if (!list.length) {
+
     element.innerHTML = `
       <div class="card">
+
         <div>
-          <h3>Nenhum evento encontrado</h3>
+
+          <h3>
+            Nenhum evento encontrado
+          </h3>
+
           <p>
             Ainda não existem eventos publicados.
           </p>
+
         </div>
+
       </div>
     `;
 
     return;
   }
+
 
   element.innerHTML =
     list.map(eventCard).join("");
@@ -166,29 +206,38 @@ function renderEvents(list = EVENTS) {
 ========================= */
 
 async function initHomeOrEvents() {
+
   const grid =
     document.getElementById("eventGrid");
 
+
   if (!grid) return;
+
 
   await loadEvents();
 
   renderEvents();
 
+
   const search =
     document.getElementById("search");
 
+
   if (search) {
+
     search.addEventListener(
       "input",
       () => {
+
         const query =
           search.value
             .trim()
             .toLowerCase();
 
+
         const filtered =
           EVENTS.filter(event => {
+
             const text = `
               ${event.name || ""}
               ${event.city || ""}
@@ -196,11 +245,127 @@ async function initHomeOrEvents() {
               ${event.venue || ""}
             `.toLowerCase();
 
+
             return text.includes(query);
+
           });
 
+
         renderEvents(filtered);
+
       }
+    );
+  }
+}
+
+
+/* =========================
+   COMPRAR INGRESSO
+========================= */
+
+async function buyTicket(listingId) {
+
+  try {
+
+    /* =========================
+       VERIFICAR LOGIN
+    ========================= */
+
+    const {
+      data: { user }
+    } = await db.auth.getUser();
+
+
+    if (!user) {
+
+      alert(
+        "Entre na sua conta antes de comprar um ingresso."
+      );
+
+      location.href =
+        "login.html";
+
+      return;
+    }
+
+
+    /* =========================
+       CONFIRMAR COMPRA
+    ========================= */
+
+    const confirmed =
+      confirm(
+        "Deseja confirmar a compra deste ingresso?"
+      );
+
+
+    if (!confirmed) {
+      return;
+    }
+
+
+    /* =========================
+       CHAMAR FUNÇÃO DO SUPABASE
+    ========================= */
+
+    const {
+      data,
+      error
+    } = await db.rpc(
+      "buy_listing",
+      {
+        p_listing_id: listingId,
+        p_quantity: 1
+      }
+    );
+
+
+    if (error) {
+
+      console.error(
+        "Erro ao comprar ingresso:",
+        error
+      );
+
+      alert(
+        "Não foi possível concluir a compra:\n\n" +
+        error.message
+      );
+
+      return;
+    }
+
+
+    if (!data) {
+
+      alert(
+        "A compra não retornou os dados esperados."
+      );
+
+      return;
+    }
+
+
+    /* =========================
+       SUCESSO
+    ========================= */
+
+    alert(
+      "Compra registrada com sucesso! 🎟️"
+    );
+
+
+    location.reload();
+
+  } catch (error) {
+
+    console.error(
+      "Erro inesperado na compra:",
+      error
+    );
+
+    alert(
+      "Ocorreu um erro ao tentar comprar o ingresso."
     );
   }
 }
@@ -211,25 +376,35 @@ async function initHomeOrEvents() {
 ========================= */
 
 async function initEventPage() {
+
   const page =
     document.getElementById("eventPage");
 
+
   if (!page) return;
 
+
   await loadEvents();
+
 
   const params =
     new URLSearchParams(location.search);
 
+
   const id =
     params.get("id");
 
+
   const event =
     EVENTS.find(
-      item => String(item.id) === String(id)
+      item =>
+        String(item.id) ===
+        String(id)
     );
 
+
   if (!event) {
+
     page.innerHTML = `
       <div class="form-page">
 
@@ -251,9 +426,15 @@ async function initEventPage() {
   }
 
 
+  /* =========================
+     CARREGAR ANÚNCIOS
+  ========================= */
+
   let listings = [];
 
+
   try {
+
     const result =
       await db
         .from("listings")
@@ -264,9 +445,14 @@ async function initEventPage() {
           ascending: true
         });
 
+
     if (!result.error) {
-      listings = result.data || [];
+
+      listings =
+        result.data || [];
+
     } else {
+
       console.error(
         "Erro ao carregar anúncios:",
         result.error
@@ -274,12 +460,17 @@ async function initEventPage() {
     }
 
   } catch (error) {
+
     console.error(
       "Erro ao carregar ingressos:",
       error
     );
   }
 
+
+  /* =========================
+     PÁGINA DO EVENTO
+  ========================= */
 
   page.innerHTML = `
 
@@ -294,9 +485,11 @@ async function initEventPage() {
       alt=""
     >
 
+
     <h1>
       ${escapeHtml(event.name)}
     </h1>
+
 
     <p>
       ${escapeHtml(
@@ -312,22 +505,27 @@ async function initEventPage() {
       }
     </p>
 
+
     ${
       event.description
         ? `<p>${escapeHtml(event.description)}</p>`
         : ""
     }
 
+
     <hr>
+
 
     <h2>
       Ingressos disponíveis
     </h2>
 
+
     <div class="offers">
 
       ${
         listings.length
+
           ? listings
               .map(
                 listing => `
@@ -343,10 +541,29 @@ async function initEventPage() {
                       )}
                     </h3>
 
+
+                    ${
+                      listing.ticket_date
+                        ? `
+                          <p>
+                            Data do ingresso:
+                            ${formatDate(
+                              listing.ticket_date
+                            )}
+                          </p>
+                        `
+                        : ""
+                    }
+
+
                     <p>
-                      ${Number(listing.quantity || 0)}
-                      ingresso(s) disponível(is)
+                      ${Number(
+                        listing.quantity || 0
+                      )}
+                      ingresso(s)
+                      disponível(is)
                     </p>
+
 
                     <div class="price">
                       ${money(
@@ -355,11 +572,13 @@ async function initEventPage() {
                       por ingresso
                     </div>
 
+
                     <br>
+
 
                     <button
                       class="btn"
-                      onclick="alert('Compra será liberada na próxima etapa.')"
+                      onclick="buyTicket('${listing.id}')"
                     >
                       Comprar ingresso
                     </button>
@@ -372,6 +591,7 @@ async function initEventPage() {
               )
               .join("")
 
+
           : `
 
             <div class="card">
@@ -382,11 +602,13 @@ async function initEventPage() {
                   Ainda não há anúncios
                 </h3>
 
+
                 <p>
                   Se você possui ingresso
                   para este evento,
                   pode anunciá-lo no TicketHub.
                 </p>
+
 
                 <a
                   class="btn"
@@ -412,15 +634,20 @@ async function initEventPage() {
 ========================= */
 
 async function initSell() {
+
   const form =
     document.getElementById("sellForm");
 
+
   if (!form) return;
+
 
   await loadEvents();
 
+
   const select =
     document.getElementById("sellEvent");
+
 
   if (select) {
 
@@ -428,34 +655,48 @@ async function initSell() {
       EVENTS
         .map(
           event => `
+
             <option
               value="${escapeHtml(event.id)}"
             >
               ${escapeHtml(event.name)}
             </option>
+
           `
         )
         .join("");
 
 
-    /* Se veio de um evento específico */
+    /* =========================
+       EVENTO ESPECÍFICO
+    ========================= */
+
     const params =
       new URLSearchParams(location.search);
 
+
     const eventId =
       params.get("event");
+
 
     if (
       eventId &&
       EVENTS.some(
         event =>
-          String(event.id) === String(eventId)
+          String(event.id) ===
+          String(eventId)
       )
     ) {
-      select.value = eventId;
+
+      select.value =
+        eventId;
     }
   }
 
+
+  /* =========================
+     ENVIAR ANÚNCIO
+  ========================= */
 
   form.addEventListener(
     "submit",
@@ -487,7 +728,7 @@ async function initSell() {
 
 
       /* =========================
-         LER FORMULÁRIO
+         FORMULÁRIO
       ========================= */
 
       const formData =
@@ -504,6 +745,12 @@ async function initSell() {
         String(
           formData.get("sector") || ""
         ).trim();
+
+
+      const ticketDate =
+        String(
+          formData.get("ticket_date") || ""
+        );
 
 
       const quantity =
@@ -546,6 +793,16 @@ async function initSell() {
       }
 
 
+      if (!ticketDate) {
+
+        alert(
+          "Informe a data do ingresso."
+        );
+
+        return;
+      }
+
+
       if (
         !Number.isInteger(quantity) ||
         quantity < 1
@@ -573,7 +830,9 @@ async function initSell() {
 
 
       const priceCents =
-        Math.round(price * 100);
+        Math.round(
+          price * 100
+        );
 
 
       if (priceCents < 100) {
@@ -612,23 +871,29 @@ async function initSell() {
          CRIAR ANÚNCIO
       ========================= */
 
-      const ticketDate =
-  String(
-    formData.get("ticket_date") || ""
-  );
-if (!ticketDate) {
-  alert("Informe a data do ingresso.");
-  return;
-}
-const payload = {
-  event_id: selectedEvent.id,
-  seller_id: user.id,
-  sector: sector,
-  ticket_date: ticketDate || null,
-  quantity: quantity,
-  price_cents: priceCents,
-  status: "available"
-};
+      const payload = {
+
+        event_id:
+          selectedEvent.id,
+
+        seller_id:
+          user.id,
+
+        sector:
+          sector,
+
+        ticket_date:
+          ticketDate,
+
+        quantity:
+          quantity,
+
+        price_cents:
+          priceCents,
+
+        status:
+          "available"
+      };
 
 
       const {
@@ -691,10 +956,13 @@ const payload = {
 ========================= */
 
 async function initLogin() {
+
   const form =
     document.getElementById("loginForm");
 
+
   if (!form) return;
+
 
   const mode =
     document.getElementById("loginMode");
@@ -706,11 +974,13 @@ async function initLogin() {
 
       event.preventDefault();
 
+
       const email =
         document
           .getElementById("email")
           .value
           .trim();
+
 
       const password =
         document
